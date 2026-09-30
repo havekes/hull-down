@@ -1,0 +1,90 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/controllers/debug_input_logger.gd" id="1_debug"]
+[ext_resource type="Material" path="res://assets/materials/checkerboard.tres" id="2_ground"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
+sky_top_color = Color(0.35, 0.55, 0.85, 1)
+sky_horizon_color = Color(0.7, 0.78, 0.85, 1)
+ground_bottom_color = Color(0.15, 0.16, 0.18, 1)
+ground_horizon_color = Color(0.5, 0.5, 0.52, 1)
+sun_angle_max = 20.0
+sun_curve = 0.15
+
+[sub_resource type="Sky" id="Sky_main"]
+sky_material = SubResource("ProceduralSkyMaterial_sky")
+
+[sub_resource type="Environment" id="Environment_main"]
+background_mode = 2
+sky = SubResource("Sky_main")
+ambient_light_source = 3
+ambient_light_sky_contribution = 1.0
+tonemap_mode = 2
+ssao_enabled = true
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+size = Vector2(240, 240)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(240, 1, 240)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pillar"]
+size = Vector3(2, 4, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pillar"]
+size = Vector3(2, 4, 2)
+
+[node name="TestArena" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_main")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.707107, -0.57735, 0.408248, 0, 0.57735, 0.816497, -0.707107, -0.57735, 0.408248, 0, 20, 0)
+shadow_enabled = true
+
+[node name="Ground" type="StaticBody3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("PlaneMesh_ground")
+material_override = ExtResource("2_ground")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("BoxShape3D_ground")
+
+[node name="ReferencePillars" type="Node3D" parent="."]
+
+[node name="Pillar20m" type="StaticBody3D" parent="ReferencePillars"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -20)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ReferencePillars/Pillar20m"]
+mesh = SubResource("BoxMesh_pillar")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ReferencePillars/Pillar20m"]
+shape = SubResource("BoxShape3D_pillar")
+
+[node name="Pillar50m" type="StaticBody3D" parent="ReferencePillars"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -50)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ReferencePillars/Pillar50m"]
+mesh = SubResource("BoxMesh_pillar")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ReferencePillars/Pillar50m"]
+shape = SubResource("BoxShape3D_pillar")
+
+[node name="Pillar100m" type="StaticBody3D" parent="ReferencePillars"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -100)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ReferencePillars/Pillar100m"]
+mesh = SubResource("BoxMesh_pillar")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ReferencePillars/Pillar100m"]
+shape = SubResource("BoxShape3D_pillar")
+
+[node name="PlaceholderCamera" type="Camera3D" parent="."]
+transform = Transform3D(0.96514, -0.042253, 0.2583, 0, 0.986883, 0.161437, -0.261733, -0.15581, 0.952481, 16, 11, 24)
+current = true
+
+[node name="InputDebug" type="Node" parent="."]
+script = ExtResource("1_debug")

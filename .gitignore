@@ -1,0 +1,13 @@
+# Godot 4+
+.godot/
+.import/
+export.cfg
+export_presets.cfg
+*.translation
+
+# Temporary / generated files
+*.tmp
+/tmp/
+
+# macOS
+.DS_Store

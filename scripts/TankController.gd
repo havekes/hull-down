@@ -1,4 +1,5 @@
 extends CharacterBody3D
+class_name TankController
 ## TANK-02 kinematic tracked-vehicle driving controller.
 ##
 ## Drives a [CharacterBody3D] hull with World-of-Tanks-style weight: the tank
@@ -40,6 +41,7 @@ const WALL_BLOCK_DOT: float = -0.7
 @export var debug: bool = false
 
 var _yaw: float = 0.0
+var _yaw_rate: float = 0.0
 var _forward_speed: float = 0.0
 var _floor_up: Vector3 = Vector3.UP
 var _corner_raycasts: Array[RayCast3D] = []
@@ -71,6 +73,25 @@ func get_forward_speed() -> float:
 	return _forward_speed
 
 
+## Magnitude of the hull's yaw rate (rad/s); zero when not steering.
+func get_yaw_rate() -> float:
+	return absf(_yaw_rate)
+
+
+## True while the hull is travelling faster than [param speed_epsilon] (m/s).
+func is_moving(speed_epsilon: float = 0.5) -> bool:
+	return absf(_forward_speed) > speed_epsilon
+
+
+## Speed normalised against the cap for the current direction, in [code]0..1[/code].
+## Full forward and full reverse both report [code]1.0[/code].
+func get_speed_fraction() -> float:
+	var reference: float = max_forward_speed if _forward_speed >= 0.0 else max_reverse_speed
+	if reference <= 0.0:
+		return 0.0
+	return clampf(absf(_forward_speed) / reference, 0.0, 1.0)
+
+
 # Selects the target speed from the drive input, lowers it while steering, and
 # approaches it with move_toward at acceleration or braking_deceleration.
 func _update_speed(drive_input: float, turn_input: float, delta: float) -> void:
@@ -96,9 +117,11 @@ func _update_speed(drive_input: float, turn_input: float, delta: float) -> void:
 # hull_traverse_speed, which keeps pivot-in-place and wide under-way arcs
 # consistent. The difference between the two is purely the speed behaviour.
 func _update_turn(turn_input: float, delta: float) -> void:
+	_yaw_rate = 0.0
 	if is_zero_approx(turn_input):
 		return
-	_yaw = wrapf(_yaw + turn_input * hull_traverse_speed * delta, -PI, PI)
+	_yaw_rate = turn_input * hull_traverse_speed
+	_yaw = wrapf(_yaw + _yaw_rate * delta, -PI, PI)
 
 
 # Rebuilds the hull basis from the heading yaw and the averaged floor normal so

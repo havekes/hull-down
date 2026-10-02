@@ -1,4 +1,5 @@
 extends Node3D
+class_name TurretController
 ## TANK-03 decoupled turret traverse and gun elevation controller.
 ##
 ## Every physics frame this reads the chase camera's screen-centre ray to resolve
@@ -43,6 +44,10 @@ extends Node3D
 ## hits no geometry it lies [member aim_fallback_distance] metres along the ray.
 var target_aim_point: Vector3 = Vector3.ZERO
 
+# Combined turret yaw + gun pitch angular speed applied this physics frame
+# (rad/s), used by the reticle HUD to bloom while the mounts are moving.
+var _traverse_rate: float = 0.0
+
 # RIDs the aim ray ignores so it cannot hit the tank's own hull.
 var _exclude_rids: Array[RID] = []
 
@@ -56,9 +61,24 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	var yaw_before: float = _turret_mount.rotation.y
+	var pitch_before: float = _gun_mount.rotation.x
 	_update_target_aim_point()
 	_update_turret_yaw(delta)
 	_update_gun_pitch(delta)
+	var yaw_delta: float = absf(angle_difference(yaw_before, _turret_mount.rotation.y))
+	var pitch_delta: float = absf(_gun_mount.rotation.x - pitch_before)
+	_traverse_rate = (yaw_delta + pitch_delta) / delta if delta > 0.0 else 0.0
+
+
+## Combined turret yaw + gun pitch angular speed this frame (rad/s).
+func get_traverse_rate() -> float:
+	return _traverse_rate
+
+
+## True while the mounts are moving faster than [param threshold] (rad/s).
+func is_traversing(threshold: float = 0.05) -> bool:
+	return _traverse_rate > threshold
 
 
 # Resolves where the camera centre ray lands this frame. Falls back to a far

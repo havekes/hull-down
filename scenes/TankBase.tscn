@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3]
 
-[ext_resource type="Script" uid="uid://c0ocsx3g4v4h5" path="res://scripts/controllers/tank_base.gd" id="1_tank"]
+[ext_resource type="Script" uid="uid://fk002rk62gah" path="res://scripts/TankController.gd" id="1_tank"]
 [ext_resource type="Script" uid="uid://6qml6u271nqw" path="res://scripts/controllers/camera_chase.gd" id="2_camera"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_hull"]
@@ -22,6 +22,22 @@ script = ExtResource("1_tank")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("BoxShape3D_hull")
+
+[node name="HullRayFrontLeft" type="RayCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.05, -2.6)
+target_position = Vector3(0, -1.5, 0)
+
+[node name="HullRayFrontRight" type="RayCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.05, -2.6)
+target_position = Vector3(0, -1.5, 0)
+
+[node name="HullRayRearLeft" type="RayCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.05, 2.6)
+target_position = Vector3(0, -1.5, 0)
+
+[node name="HullRayRearRight" type="RayCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.05, 2.6)
+target_position = Vector3(0, -1.5, 0)
 
 [node name="Hull" type="Node3D" parent="."]
 

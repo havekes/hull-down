@@ -7,11 +7,11 @@ class_name ReticleHUD
 ## reload progress bar while the gun is cycling.
 ##
 ## Dispersion is accumulated from three continuous penalties (hull speed, hull
-## traverse, turret traverse) plus a temporary spike applied on firing. When a
-## penalty is present the ring blooms out to the target radius within
-## [member bloom_time]; with no penalties it shrinks back to
-## [member base_dispersion_radius] at a constant rate that covers the full
-## range in [member aim_time] seconds.
+## traverse, turret traverse) plus a temporary spike applied on firing. The ring
+## blooms out to the target radius within [member bloom_time]. It never shrinks
+## faster than the rate that covers the full range in [member aim_time] seconds,
+## so releasing the controls always returns the ring to the base size over about
+## [member aim_time] even while the hull is still coasting to a stop.
 ##
 ## Wiring: [member tank_path] points at the tank root; the camera, muzzle and
 ## controllers are resolved from it. The gun finds this HUD through the
@@ -85,15 +85,9 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _tank == null:
-		_resolve_references()
+	_resolve_references()
 	_update_dispersion(delta)
 	queue_redraw()
-
-
-## Current dispersion radius in screen pixels.
-func get_dispersion_radius() -> float:
-	return current_dispersion_radius
 
 
 ## Current dispersion normalised in [code]0..1[/code]: base radius is 0 and max
@@ -122,19 +116,26 @@ func set_reload_state(progress: float, reloading: bool) -> void:
 	_reloading = reloading
 
 
-# Resolves the tank and its children, retrying each frame until the tank exists
-# (the HUD may be readied before the tank depending on scene order).
+# Resolves the tank and its children. Called every frame: each reference is
+# filled in independently while unset (or freed) so nodes that appear later,
+# depending on scene order, are still picked up.
 func _resolve_references() -> void:
-	if tank_path != NodePath():
-		_tank = get_node_or_null(tank_path) as Node3D
-	if _tank == null:
-		_tank = get_tree().get_first_node_in_group(&"tank") as Node3D
+	if not is_instance_valid(_tank):
+		_tank = null
+		if tank_path != NodePath():
+			_tank = get_node_or_null(tank_path) as Node3D
+		if _tank == null:
+			_tank = get_tree().get_first_node_in_group(&"tank") as Node3D
 	if _tank == null:
 		return
-	_camera = _tank.get_node_or_null(CAMERA_PATH) as Camera3D
-	_muzzle = _tank.get_node_or_null(MUZZLE_PATH) as Node3D
-	_tank_controller = _tank as TankController
-	_turret_controller = _tank.get_node_or_null(TURRET_PATH) as TurretController
+	if not is_instance_valid(_camera):
+		_camera = _tank.get_node_or_null(CAMERA_PATH) as Camera3D
+	if not is_instance_valid(_muzzle):
+		_muzzle = _tank.get_node_or_null(MUZZLE_PATH) as Node3D
+	if not is_instance_valid(_tank_controller):
+		_tank_controller = _tank as TankController
+	if not is_instance_valid(_turret_controller):
+		_turret_controller = _tank.get_node_or_null(TURRET_PATH) as TurretController
 
 
 func _update_dispersion(delta: float) -> void:
@@ -145,28 +146,31 @@ func _update_dispersion(delta: float) -> void:
 	_shot_spike = move_toward(_shot_spike, 0.0, shrink_rate * delta)
 
 	var penalties: float = _continuous_penalties() + _shot_spike
-	if penalties > 0.0:
-		var target: float = clampf(
-				base_dispersion_radius + penalties,
-				base_dispersion_radius,
-				max_dispersion_radius)
-		current_dispersion_radius = move_toward(
-				current_dispersion_radius, target, bloom_rate * delta)
-	else:
-		current_dispersion_radius = move_toward(
-				current_dispersion_radius, base_dispersion_radius, shrink_rate * delta)
+	var target: float = clampf(
+			base_dispersion_radius + penalties,
+			base_dispersion_radius,
+			max_dispersion_radius)
+	# Bloom out quickly when the target grows, but never shrink faster than the
+	# aim_time rate: rate-limiting the down move here keeps a stop at ~aim_time
+	# even while speed_fraction is still ramping down during deceleration.
+	var rate: float = bloom_rate if target > current_dispersion_radius else shrink_rate
+	current_dispersion_radius = move_toward(
+			current_dispersion_radius, target, rate * delta)
 	current_dispersion_radius = clampf(
 			current_dispersion_radius, base_dispersion_radius, max_dispersion_radius)
 
 
-# Sum of the continuous movement/traverse penalties for this frame.
+# Sum of the continuous movement/traverse penalties for this frame. The
+# speed-scaled movement penalty only applies while the hull is actually moving;
+# pure pivot-in-place turns still contribute the traverse penalty via yaw rate.
 func _continuous_penalties() -> float:
 	var total: float = 0.0
 	if _tank_controller != null:
-		total += movement_penalty * _tank_controller.get_speed_fraction()
+		if _tank_controller.is_moving():
+			total += movement_penalty * _tank_controller.get_speed_fraction()
 		if _tank_controller.get_yaw_rate() > yaw_rate_epsilon:
 			total += traverse_penalty
-	if _turret_controller != null and _turret_controller.get_traverse_rate() > traverse_rate_epsilon:
+	if _turret_controller != null and _turret_controller.is_traversing(traverse_rate_epsilon):
 		total += turret_penalty
 	return total
 

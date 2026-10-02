@@ -78,7 +78,7 @@ func get_traverse_rate() -> float:
 
 ## True while the mounts are moving faster than [param threshold] (rad/s).
 func is_traversing(threshold: float = 0.05) -> bool:
-	return _traverse_rate > threshold
+	return get_traverse_rate() > threshold
 
 
 # Resolves where the camera centre ray lands this frame. Falls back to a far

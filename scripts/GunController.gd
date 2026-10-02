@@ -59,7 +59,12 @@ func _ready() -> void:
 	_tracer_material.emission_energy_multiplier = 4.0
 
 
-func _process(delta: float) -> void:
+# All gun state advances on the physics tick. The hull and turret controllers run
+# in _physics_process, so reading input and firing here keeps the muzzle
+# transform and aim state in sync with them (no one-tick stale transform) and
+# makes the raycast frame-rate independent. The reload countdown lives here too
+# for consistency with the rest of the cycle.
+func _physics_process(delta: float) -> void:
 	_reload_timer = maxf(_reload_timer - delta, 0.0)
 	if _reticle_hud == null:
 		_reticle_hud = get_tree().get_first_node_in_group(GROUP_RETICLE_HUD) as ReticleHUD

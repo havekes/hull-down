@@ -1,7 +1,8 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/controllers/debug_input_logger.gd" id="1_debug"]
 [ext_resource type="Material" path="res://assets/materials/checkerboard.tres" id="2_ground"]
+[ext_resource type="PackedScene" path="res://scenes/TankBase.tscn" id="3_tank"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.35, 0.55, 0.85, 1)
@@ -82,9 +83,7 @@ mesh = SubResource("BoxMesh_pillar")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="ReferencePillars/Pillar100m"]
 shape = SubResource("BoxShape3D_pillar")
 
-[node name="PlaceholderCamera" type="Camera3D" parent="."]
-transform = Transform3D(0.96514, -0.042253, 0.2583, 0, 0.986883, 0.161437, -0.261733, -0.15581, 0.952481, 16, 11, 24)
-current = true
+[node name="Tank" parent="." instance=ExtResource("3_tank")]
 
 [node name="InputDebug" type="Node" parent="."]
 script = ExtResource("1_debug")

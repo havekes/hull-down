@@ -58,7 +58,7 @@ material = SubResource("StandardMaterial3D_hull")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0.8)
 
 [node name="TurretMesh" type="CSGCylinder3D" parent="Hull/TurretMount"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.32, 0)
 radius = 1.2
 height = 0.7
 material = SubResource("StandardMaterial3D_turret")

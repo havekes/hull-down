@@ -26,6 +26,16 @@ func _ready() -> void:
 	rotation = Vector3(_pitch, _yaw, 0.0)
 	_target_spring_length = clampf(spring_length, ZOOM_MIN, ZOOM_MAX)
 	spring_length = _target_spring_length
+	_exclude_tank_body()
+
+
+# The SpringArm3D must never cast against the hull it is rigged to, or the
+# camera collapses into the tank. Resolve the hull through the "tank" group
+# rather than the parent chain: CAM-01 reparents the pivot out of the tank.
+func _exclude_tank_body() -> void:
+	var tank: CollisionObject3D = get_tree().get_first_node_in_group(&"tank") as CollisionObject3D
+	if tank != null:
+		add_excluded_object(tank.get_rid())
 
 
 func _unhandled_input(event: InputEvent) -> void:
